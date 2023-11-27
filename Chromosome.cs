@@ -17,29 +17,43 @@ namespace GeneticAlgorithm
         private UserFunction userFunction;
         private double fitnessGenom;
         private bool decimalCode;
+        private double leftRange;
+        private double rightRange;
 
-        public Chromosome(int chromosomeLength, UserFunction userFunction, bool decimalCode)
+        public Chromosome(int chromosomeLength, UserFunction userFunction, bool decimalCode, double leftRange, double rightRange)
         {
             this.chromosomeLength = chromosomeLength;
             this.userFunction = userFunction;
             ChromosomeGenes = new double[chromosomeLength];
             this.userFunction = userFunction;
             this.decimalCode = decimalCode;
+            LeftRange = leftRange;
+            RightRange = rightRange;
         }
 
         public double FitnessGenom { get => fitnessGenom; set => fitnessGenom = value; }
         public double[] ChromosomeGenes { get => chromosomeGenes; set => chromosomeGenes = value; }
         public bool DecimalCode { get => decimalCode; set => decimalCode = value; }
+        public double LeftRange { get => leftRange; set => leftRange = value; }
+        public double RightRange { get => rightRange; set => rightRange = value; }
 
         public void calculateFitness()
         {
-            fitnessGenom = userFunction.findFunctionValue(ChromosomeGenes[0], ChromosomeGenes[1]);
+            if (decimalCode) {
+                fitnessGenom = userFunction.findFunctionValue(ChromosomeGenes[0], ChromosomeGenes[1]);
+            }
+            else
+            {
+                double codedFitrness = userFunction.findFunctionValue(doubleToCode(ChromosomeGenes[0]), doubleToCode(ChromosomeGenes[1]));
+                fitnessGenom = codedToDouble(codedFitrness);
+            }
+
         }
 
         public List<Chromosome> crossingover(Chromosome parent2, Random rand)
         {
-            Chromosome child1 = new Chromosome(chromosomeLength, userFunction, DecimalCode);
-            Chromosome child2 = new Chromosome(chromosomeLength, userFunction, DecimalCode);
+            Chromosome child1 = new Chromosome(chromosomeLength, userFunction, DecimalCode, LeftRange, RightRange);
+            Chromosome child2 = new Chromosome(chromosomeLength, userFunction, DecimalCode, LeftRange, RightRange);
             int position = (int)(rand.NextDouble() * chromosomeLength);
             for (int gene = 0; gene < chromosomeLength; gene++)
             {
@@ -59,22 +73,14 @@ namespace GeneticAlgorithm
             return new List<Chromosome> { child1, child2 };
         }
 
-        public void mutate(Random rand, double mutateRate, double leftRange, double rightRange)
+        public void mutate(Random rand, double mutateRate)
         {
-            for (int gene = 0; gene < chromosomeLength; gene++)
+            double mutation = rand.NextDouble();
+            if (mutation >= mutateRate)
             {
-                int sumOrSub = rand.Next(0, 2);
-                if (rand.NextDouble() <= mutateRate)
+                for (int gene = 0; gene < chromosomeLength; gene++)
                 {
-                    double gain = rand.NextDouble();
-                    if (sumOrSub == 0)
-                    {
-                        ChromosomeGenes[gene] = ChromosomeGenes[gene] + gain * (rightRange - ChromosomeGenes[gene]) / 2;
-                    }
-                    else
-                    {
-                        ChromosomeGenes[gene] = ChromosomeGenes[gene] - gain * (ChromosomeGenes[gene] - leftRange) / 2;
-                    }
+                    ChromosomeGenes[gene] = rand.NextDouble() * (RightRange - LeftRange) + LeftRange;
                 }
             }
         }
@@ -95,7 +101,8 @@ namespace GeneticAlgorithm
             {
                 for (int gene = 0; gene < chromosomeLength; gene++)
                 {
-                    int[] bits = DoubleToBits(chromosomeGenes[gene]);
+
+                    int[] bits = DoubleToBits(doubleToCode(chromosomeGenes[gene]));
                     string bitsS = "";
                     for (int bit = 0; bit < bits.Length; bit++)
                     {
@@ -120,6 +127,19 @@ namespace GeneticAlgorithm
             }
 
             return bits;
+        }
+
+        private int doubleToCode(double gene)
+        {
+            return Convert.ToInt32(Math.Floor((gene - Convert.ToInt32(Math.Floor(LeftRange))) * (Math.Pow(2, 10) - 1) /
+                (Convert.ToInt32(Math.Floor(RightRange)) - Convert.ToInt32(Math.Floor(LeftRange)))));
+        }
+
+        private double codedToDouble(double gene)
+        {
+            double decodedGene = gene * (Convert.ToInt32(Math.Floor(RightRange)) - Convert.ToInt32(Math.Floor(LeftRange))) /
+                (Math.Pow(2, 10) - 1) + Convert.ToInt32(Math.Floor(LeftRange));
+            return decodedGene;
         }
     }
 }

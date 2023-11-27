@@ -55,14 +55,13 @@ namespace GeneticAlgorithm
         {
             for (int being = 0; being < populationCount; being++)
             {
-                Chromosome currChromosome = new Chromosome(chomosomeLength, userFunction, DecimalCode);
+                Chromosome currChromosome = new Chromosome(chomosomeLength, userFunction, DecimalCode, leftRange, rightRange);
                 for (int gene = 0; gene < chomosomeLength; gene++)
                 {
                     int midOrEdge = rand.Next(0, 2);
                     if (midOrEdge == 0)
                     {
-                        currChromosome.ChromosomeGenes[gene] = rand.NextDouble() * (rightRange - leftRange)
-                        + (rightRange - 3 * leftRange) / 2;
+                        currChromosome.ChromosomeGenes[gene] = rand.NextDouble() * ((rightRange - leftRange) / 2) + leftRange;
                     }
                     else
                     {
@@ -108,9 +107,9 @@ namespace GeneticAlgorithm
                     child1 = parent1;
                     child2 = parent2;
                 }
-                child1.mutate(rand, mutateRate, leftRange, rightRange);
+                child1.mutate(rand, mutateRate);
                 child1.calculateFitness();
-                child2.mutate(rand, mutateRate, leftRange, rightRange);
+                child2.mutate(rand, mutateRate);
                 child2.calculateFitness();
                 nextGeneration.Add(child1);
                 nextGeneration.Add(child2);
